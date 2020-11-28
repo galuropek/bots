@@ -1,0 +1,2 @@
+class SecretSanta
+end
