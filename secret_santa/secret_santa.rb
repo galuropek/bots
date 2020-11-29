@@ -8,6 +8,7 @@ class SecretSanta
   GENERATED_RESULT = 'generated_result.yml'.freeze
   USERS_FILE = 'users.yml'.freeze
   HOBBIES_REGEXP = /^\s*\"*\s*ХОББИ\s*\"*\s*:/i
+  ALL_USERS_EXPECTED_COUNT = 6
 
   def run
     run_telegram_bot
@@ -16,9 +17,9 @@ class SecretSanta
   private
 
   def run_telegram_bot
-    Telegram::Bot::Client.run(token) do |bot|
+    Telegram::Bot::Client.run(token, logger: Logger.new($stdout)) do |bot|
+      bot.logger.info('Bot has been started')
       bot.listen do |message|
-        puts message.inspect
         case message
         when Telegram::Bot::Types::CallbackQuery
           handle_callback(bot, message)
@@ -29,14 +30,15 @@ class SecretSanta
     end
   end
 
-  def update_hobbies_info(message)
+  def update_hobbies_info(bot, message)
     all_users = YAML.load_file(USERS_FILE)
     user = all_users[message.from.id]
     raise "Not found user: #{message.from.id}" unless user
 
     # user ? user[:hobbies] = message.text : all_users[message.from.username] = create_a_new_user(message)
+    history_hobbies = user[:hobbies]
     user[:hobbies] = message.text.gsub(HOBBIES_REGEXP, '').strip
-    puts "\tUpdated hobbies: { #{message.from.id} => #{user.to_s} }"
+    bot.logger.info("Updated hobbies by #{user[:alias] || user[:first_name]}: #{history_hobbies} => #{user[:hobbies]}")
     File.open(USERS_FILE, 'w') { |file| file.write(all_users.to_yaml) }
   end
 
@@ -67,7 +69,7 @@ class SecretSanta
           text = "File #{GENERATED_RESULT} exists. Remove for creating a new file."
         else
           result = {}
-          result = santa_generate while result_valid?(result) == false
+          result = santa_generate(bot) while result_valid?(result) == false
           File.open(GENERATED_RESULT, 'w') { |file| file.write(result.to_yaml) }
           text = result.to_s
         end
@@ -77,7 +79,7 @@ class SecretSanta
       end
     when HOBBIES_REGEXP
       if hobbies_valid?(bot, message)
-        update_hobbies_info(message)
+        update_hobbies_info(bot, message)
         start_functionality(bot, message)
       end
     when %r{/.*}
@@ -87,9 +89,9 @@ class SecretSanta
     end
   end
 
-  def user_valid?(id)
+  def user_valid?(bot, id)
     if id.nil?
-      puts 'id is nil'
+      bot.logger.error('id is nil')
       false
     elsif File.exists?(USERS_FILE)
       get_user(id).nil? || get_user(id)[:hobbies].nil? ? false : true
@@ -102,17 +104,17 @@ class SecretSanta
     YAML.load_file(USERS_FILE)[id] rescue nil
   end
 
-  def save_new_user(message)
+  def save_new_user(bot, message)
     all_users = YAML.load_file(USERS_FILE) rescue {}
     all_users[message.from.id] = create_a_new_user(message)
-    puts "\tCreated a new user: #{all_users.to_s}"
+    bot.logger.info("Created a new user: #{all_users[message.from.id]}")
     File.open(USERS_FILE, 'w') { |file| file.write(all_users.to_yaml) }
   end
 
   def start_functionality(bot, message)
     user_name = message.from.first_name ? message.from.first_name : message.from.username || 'Санта'
 
-    if user_valid?(message.from.id)
+    if user_valid?(bot, message.from.id)
       kb = [
           Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Узнай чей вы санта', callback_data: 'show_my_santa'),
           Telegram::Bot::Types::InlineKeyboardButton.new(text: 'Ваша Хобби информация', callback_data: 'show_my_hobbies')
@@ -120,7 +122,7 @@ class SecretSanta
       markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
       bot.api.send_message(chat_id: message.chat.id, text: "Хо-хо-хо, #{user_name}! Теперь можно узнать чей вы санта.", reply_markup: markup)
     else
-      save_new_user(message) if get_user(message.from.id).nil?
+      save_new_user(bot, message) if get_user(message.from.id).nil?
       bot.api.send_message(chat_id: message.chat.id, text: "Добро пожаловать в чат-бот Secret Santa, #{user_name}!\nНачнем с того, что поможем своему санте выбрать подходящий подарок для вас. Расскажите немного о себе, о своих хобби: фильмы, игры, спорт, вышивание - все это может быть полезным при выборе подарка.\n(обязательно к заполнению для дальнейшего функционала)\n\nЧтобы добавить или обновить Хобби информацию, нужно ввести в чате \"ХOББИ:\" и дальше саму информацию о хобби, пример:\nХОББИ: мои хобби...", callback_data: 'add_hobies')
     end
   end
@@ -135,13 +137,15 @@ class SecretSanta
     when 'show_my_santa'
       begin
         user_id = YAML.load_file(GENERATED_RESULT)[message.from.id]
+        return bot.logger.error("Not found user #{message.from.id} in Generated file, check file.") unless user_id
+
         user = YAML.load_file(USERS_FILE)[user_id]
         user_name = user[:alias] ? user[:alias] : user[:fisrt_name]
         text = "Вы тайный санта для: #{user_name}\nХобби информация:\n#{user[:hobbies]}"
       rescue Errno::ENOENT => e
         count = YAML.load_file(USERS_FILE).count
-        text = "Не все участники еще зарегистрированы для генерации слйчайного санты: #{count}/6"
-        puts e
+        text = "Не все участники еще зарегистрированы для генерации слйчайного санты: #{count}/#{ALL_USERS_EXPECTED_COUNT}"
+        bot.logger.error(e)
       end
     when 'show_my_hobbies'
       text = get_hobbies(message.from.id) || 'text'
@@ -150,12 +154,11 @@ class SecretSanta
     bot.api.send_message(chat_id: message.from.id, text: text)
   end
 
-  def santa_generate
+  def santa_generate(bot)
     result = {}
     selected = []
-
-    people.each do |person|
-      dup_names = people.dup
+    users_keys.each do |person|
+      dup_names = users_keys.dup
       dup_names.delete(person)
       selected.each do |selected_name|
         dup_names.delete(selected_name)
@@ -163,11 +166,13 @@ class SecretSanta
       result[person] = dup_names.sample
       selected << result[person]
     end
-    puts result
+    bot.logger.info(result)
     result
   end
 
   def result_valid?(result)
+    return false unless result
+
     if result.empty?
       false
     elsif result.keys.count != result.keys.uniq.count
@@ -179,7 +184,7 @@ class SecretSanta
     end
   end
 
-  def people
+  def users_keys
     YAML.load_file(USERS_FILE).keys
   end
 
