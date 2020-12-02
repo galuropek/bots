@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative '../bean/user'
+
+require '../db/user_dao'
 require 'telegram/bot'
 require 'yaml'
 
@@ -11,12 +14,8 @@ class SecretSanta
   ALL_USERS_EXPECTED_COUNT = 6
   ADMIN_ID = '584548282'.freeze
 
-  def change_dir
-    puts Dir.pwd
-  end
-
   def run
-    change_dir
+    @dao = UserDao.new(YAML.load_file('config.yml')['telegram_bot'])
     run_telegram_bot
   end
 
@@ -50,6 +49,10 @@ class SecretSanta
   end
 
   def create_a_new_user(message)
+    user = User.new(message.from.id)
+    user.username = message.from.username
+    user.first_name = message.from.first_name
+    @dao.create(user)
     {
         username: message.from.username,
         first_name: message.from.first_name,
@@ -205,6 +208,6 @@ class SecretSanta
   end
 
   def token
-    @token ||= YAML.load_file(CONFIG)['token']
+    @token ||= YAML.load_file(CONFIG).dig('sdiyhgf_bot', 'token')
   end
 end
