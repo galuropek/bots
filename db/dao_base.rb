@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
-require_relative 'db_session'
+require_relative 'connection_creator'
 
-class CRUD
+class DaoBase
+
   def initialize(config)
-    @client = DBSession.new(config)
+    connection_creator = ConnectionCreator.new(config)
+    @connection = connection_creator.connection
   end
 
   def create
@@ -15,11 +17,11 @@ class CRUD
     not_implement
   end
 
-  def get(id)
+  def read
     not_implement
   end
 
-  def update(id)
+  def update
     not_implement
   end
 
@@ -28,9 +30,9 @@ class CRUD
   end
 
   def transaction(queries)
-    @client.transaction do
+    @connection.transaction do
       queries.each do |sql|
-        @client.query(sql)
+        @connection.query(sql)
       end
     end
   end
