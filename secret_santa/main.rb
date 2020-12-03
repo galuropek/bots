@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'secret_santa'
 
 SecretSanta.new.run
@@ -20,16 +21,12 @@ SecretSanta.new.run
 # end
 #
 # require 'yaml'
-# require_relative '../db/crud'
 # require_relative '../db/user_dao'
 # require_relative '../bean/user'
+# require_relative '../db/dao'
 #
 # config = YAML.load_file('config.yml')['telegram_bot']
-# dao = UserDao.new(config)
-# user = User.new('2213124')
-# puts dao.create(user).inspect
-# puts dao.get_all.each do |raw|
-#   puts raw
-# end
-# crud = CRUD.new(config)
-# puts crud.get_all.inspect
+# dao = Dao.get_dao(config)
+# user = User.new('584548282')
+# user.alias = 'Игорь'
+# puts dao.user.delete(user).inspect

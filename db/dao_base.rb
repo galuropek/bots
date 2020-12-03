@@ -17,7 +17,7 @@ class DaoBase
     not_implement
   end
 
-  def read
+  def get_user
     not_implement
   end
 

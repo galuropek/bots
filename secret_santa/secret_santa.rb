@@ -2,7 +2,7 @@
 
 require_relative '../bean/user'
 
-require '../db/user_dao'
+require '../db/dao'
 require 'telegram/bot'
 require 'yaml'
 
@@ -15,7 +15,7 @@ class SecretSanta
   ADMIN_ID = '584548282'.freeze
 
   def run
-    @dao = UserDao.new(YAML.load_file('config.yml')['telegram_bot'])
+    @dao = Dao.get_dao(YAML.load_file('config.yml')['telegram_bot'])
     run_telegram_bot
   end
 
@@ -50,9 +50,9 @@ class SecretSanta
 
   def create_a_new_user(message)
     user = User.new(message.from.id)
-    user.username = message.from.username
+    user.user_name = message.from.username
     user.first_name = message.from.first_name
-    @dao.create(user)
+    @dao.user.create(user)
     {
         username: message.from.username,
         first_name: message.from.first_name,
