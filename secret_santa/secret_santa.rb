@@ -161,7 +161,7 @@ class SecretSanta
         user = YAML.load_file(USERS_FILE)[user_id]
         user_name = user[:alias] ? user[:alias] : user[:fisrt_name]
         text = "Вы тайный санта для: #{user_name}\nХобби информация:\n#{user[:hobbies]}"
-      rescue Errno::ENOENT => e
+      rescue Errno::ENOENT
         count = YAML.load_file(USERS_FILE).count
         text = "Не все участники еще зарегистрированы для генерации случайного санты: #{count}/#{ALL_USERS_EXPECTED_COUNT}"
         bot.logger.error("Not found #{GENERATED_RESULT} file. Sent to user: #{text}")
