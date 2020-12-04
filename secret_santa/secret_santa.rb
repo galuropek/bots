@@ -30,6 +30,8 @@ class SecretSanta
           handle_callback(bot, message)
         when Telegram::Bot::Types::Message
           handle_message(bot, message)
+        else
+          raise 'Something went wrong'
         end
       end
     end
