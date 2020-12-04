@@ -2,7 +2,7 @@
 
 require_relative 'connection_creator'
 
-class DaoBase
+class BaseDao
 
   def initialize(config)
     connection_creator = ConnectionCreator.new(config)

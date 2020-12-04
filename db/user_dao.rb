@@ -1,6 +1,6 @@
-require_relative 'dao_base'
+require_relative 'base_dao'
 
-class UserDao < DaoBase
+class UserDao < BaseDao
 
   # @param [Integer] limit
   def get_all(limit: 100)
