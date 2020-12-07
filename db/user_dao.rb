@@ -15,9 +15,9 @@ class UserDao < BaseDao
     return if get_user(user)
 
     sql = 'INSERT users(telegram_id, user_name,' \
-          'first_name, last_name, alias)' \
-          "VALUES('%s', '%s', '%s', '%s', '%s')" %
-        [user.telegram_id, user.user_name, user.first_name, user.last_name, user.alias]
+          'first_name, last_name, alias, hobbies)' \
+          "VALUES('%s', '%s', '%s', '%s', '%s', '%s')" %
+        [user.telegram_id, user.user_name, user.first_name, user.last_name, user.alias, user.hobbies]
 
     @connection.query(sql)
 
@@ -79,6 +79,7 @@ class UserDao < BaseDao
       user.first_name = raw['first_name']
       user.last_name = raw['last_name']
       user.alias = raw['alias']
+      user.hobbies = raw['hobbies']
       user
     end
   end

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative 'secret_santa'
-
-SecretSanta.new.run
+# require_relative 'secret_santa'
+#
+# SecretSanta.new.run
 
 # require 'mysql2'
 # require 'yaml'
@@ -20,13 +20,15 @@ SecretSanta.new.run
 #   puts row.inspect
 # end
 #
-# require 'yaml'
-# require_relative '../db/user_dao'
-# require_relative '../bean/user'
-# require_relative '../db/dao'
-#
-# config = YAML.load_file('config.yml')['telegram_bot']
-# dao = Dao.get_dao(config)
-# user = User.new('584548282')
-# user.alias = 'Игорь'
+require 'yaml'
+require_relative '../db/user_dao'
+require_relative '../bean/user'
+require_relative '../db/dao'
+
+config = YAML.load_file('config.yml')['telegram_bot']
+dao = Dao.get_dao(config)
+user = User.new('1293764')
+user.alias = 'Игорь'
+user.hobbies = 'hobbies'
+# puts user.user_details?
 # puts dao.user.delete(user).inspect
