@@ -13,11 +13,11 @@ class BaseDao
     not_implement
   end
 
-  def get_all
+  def read_all
     not_implement
   end
 
-  def get_user
+  def read
     not_implement
   end
 

@@ -1,9 +1,10 @@
 require_relative 'base_dao'
+require_relative '../bean/user'
 
 class UserDao < BaseDao
 
   # @param [Integer] limit
-  def get_all(limit: 100)
+  def read_all(limit: 100)
     raws = @connection.query("select * from users limit #{limit}")
 
     raws.count.zero? ? nil : to_user(raws)
@@ -12,7 +13,7 @@ class UserDao < BaseDao
   # @param [User] user
   # @return [User] || [NilClass]
   def create(user)
-    return if get_user(user)
+    return if read(user)
 
     sql = 'INSERT users(telegram_id, user_name,' \
           'first_name, last_name, alias, hobbies)' \
@@ -21,12 +22,12 @@ class UserDao < BaseDao
 
     @connection.query(sql)
 
-    get_user(user)
+    read(user)
   end
 
   # @param [User] user
   # @return [User] || [NilClass]
-  def get_user(user)
+  def read(user)
     sql = "SELECT * FROM users WHERE telegram_id = '#{user.telegram_id}'"
     raws = @connection.query(sql)
     if raws.count > 1
@@ -34,6 +35,10 @@ class UserDao < BaseDao
     else
       raws.count.zero? ? nil : to_user(raws).first
     end
+  end
+
+  def read_by(telegram_id:)
+    read(User.new(telegram_id))
   end
 
   # @param [User] user
@@ -45,7 +50,7 @@ class UserDao < BaseDao
     sql = "UPDATE users set #{set} where telegram_id = '#{user.telegram_id}'"
     @connection.query(sql)
 
-    get_user(user)
+    read(user)
   end
 
   # @param [User] user
@@ -54,7 +59,7 @@ class UserDao < BaseDao
     sql = "DELETE FROM users WHERE telegram_id = '#{user.telegram_id}'"
     @connection.query(sql)
 
-    get_user(user)
+    read(user)
   end
 
   private
