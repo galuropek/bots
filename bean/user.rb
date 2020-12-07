@@ -13,4 +13,15 @@ class User
   def initialize(telegram_id)
     @telegram_id = telegram_id
   end
+
+  def to_s
+    "id: #{id} " \
+"| telegram_id: #{telegram_id.inspect} " \
+"| user_name: #{user_name.inspect} " \
+"| first_name: #{first_name.inspect} " \
+"| last_name: #{last_name.inspect} " \
+"| description: #{description.inspect} " \
+"| alias: #{self.alias.inspect} " \
+"| hobbies: #{hobbies.inspect}"
+  end
 end
