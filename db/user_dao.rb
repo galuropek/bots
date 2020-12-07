@@ -72,6 +72,7 @@ class UserDao < BaseDao
     query << "alias = '#{user.alias}'" if user.alias
     query << "first_name = '#{user.first_name}'" if user.first_name
     query << "last_name = '#{user.last_name}'" if user.last_name
+    query << "hobbies = '#{user.hobbies}'" if user.hobbies
 
     query.empty? ? nil : query.join(', ')
   end
